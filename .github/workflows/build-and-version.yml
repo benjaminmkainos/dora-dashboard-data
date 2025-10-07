@@ -1,0 +1,57 @@
+name: Build and Version
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-and-version:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for GitVersion
+      
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.10.2
+        with:
+          versionSpec: '5.x'
+      
+      - name: Calculate version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.10.2
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yml
+      
+      - name: Display version
+        run: |
+          echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
+          echo "Major: ${{ steps.gitversion.outputs.major }}"
+          echo "Minor: ${{ steps.gitversion.outputs.minor }}"
+          echo "Patch: ${{ steps.gitversion.outputs.patch }}"
+          echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
+      
+      - name: Build task
+        run: |
+          echo "Building project..."
+          echo "Version: ${{ steps.gitversion.outputs.semVer }}"
+          # Add your build commands here
+          # For example: npm run build, dotnet build, etc.
+          echo "Build completed successfully!"
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ steps.gitversion.outputs.semVer }}
+          path: |
+            README.md
+          retention-days: 7
