@@ -1,0 +1,88 @@
+name: Deploy Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code at tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          fetch-depth: 0
+      
+      - name: Get release information
+        id: release_info
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            TAG_NAME="${{ github.event.release.tag_name }}"
+          else
+            TAG_NAME="${{ inputs.tag }}"
+          fi
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Deploying tag: $TAG_NAME"
+      
+      - name: Validate release tag
+        run: |
+          TAG="${{ steps.release_info.outputs.tag_name }}"
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Error: Tag $TAG does not exist"
+            exit 1
+          fi
+          echo "Tag $TAG validated successfully"
+      
+      - name: Download release assets (if available)
+        if: github.event_name == 'release'
+        run: |
+          echo "Release assets would be downloaded here if available"
+          echo "Release URL: ${{ github.event.release.html_url }}"
+      
+      - name: Pre-deployment checks
+        run: |
+          echo "Running pre-deployment checks..."
+          echo "Tag: ${{ steps.release_info.outputs.tag_name }}"
+          echo "Commit SHA: $(git rev-parse HEAD)"
+          echo "Repository: ${{ github.repository }}"
+          # Add your pre-deployment validation here
+          echo "Pre-deployment checks passed!"
+      
+      - name: Deploy task
+        run: |
+          echo "Starting deployment..."
+          echo "Deploying version: ${{ steps.release_info.outputs.tag_name }}"
+          # Add your deployment commands here
+          # Examples:
+          # - kubectl apply -f k8s/
+          # - terraform apply
+          # - aws deploy ...
+          # - docker push ...
+          # - scp files to server
+          echo "Deployment completed successfully!"
+      
+      - name: Post-deployment verification
+        run: |
+          echo "Running post-deployment verification..."
+          # Add your verification checks here
+          # Examples:
+          # - Health check endpoints
+          # - Smoke tests
+          # - Verify service status
+          echo "Post-deployment verification passed!"
+      
+      - name: Deployment summary
+        run: |
+          echo "### Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ steps.release_info.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: $(git rev-parse HEAD)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Successful" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed at**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

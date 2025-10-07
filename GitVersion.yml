@@ -1,0 +1,24 @@
+mode: ContinuousDelivery
+branches:
+  main:
+    tag: ''
+    increment: Patch
+    is-release-branch: true
+  develop:
+    tag: alpha
+    increment: Minor
+  feature:
+    tag: beta
+    increment: Minor
+  hotfix:
+    tag: hotfix
+    increment: Patch
+  release:
+    tag: rc
+    increment: None
+  pull-request:
+    tag: pr
+    increment: Inherit
+ignore:
+  sha: []
+merge-message-formats: {}
