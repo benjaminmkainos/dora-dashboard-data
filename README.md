@@ -1,3 +1,3 @@
 # dora-dashboard-data
 
-Repo to test DORA dashboarding
+Repository to test DORA dashboarding 
